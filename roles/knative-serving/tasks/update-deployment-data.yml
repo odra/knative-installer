@@ -1,0 +1,20 @@
+---
+-
+  name: Get desired knative-serving replicas
+  shell: oc get deployment/{{ item.name }} -n {{ knative_serving_namespace }} -o jsonpath='{.status.replicas}'
+  register: knative_serving_replicas_cmd
+  failed_when: no
+  with_items: "{{ knative_serving_deployments }}"
+
+-
+  name: Get current status of knative-serving replicas
+  shell: oc get deployment/{{ item.name }} -n {{ knative_serving_namespace }} -o jsonpath='{.status.readyReplicas}'
+  register: knative_serving_ready_replicas_cmd
+  failed_when: no
+  with_items: "{{ knative_serving_deployments }}"
+
+-
+  name: Update knative_serving_deployments data
+  set_fact:
+    knative_serving_deployments: "{{ knative_serving_deployments | update_list(index=item.0, replicas=knative_serving_replicas_cmd.results[item.0].stdout | int, ready_replicas=knative_serving_ready_replicas_cmd.results[item.0].stdout | int) }}"
+  with_indexed_items: "{{ knative_serving_deployments }}"

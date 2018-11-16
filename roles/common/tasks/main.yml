@@ -1,0 +1,12 @@
+---
+# tasks file for common
+-
+  name: Create knative project
+  shell: oc create ns {{ knative_namespace }}
+  register: knative_namespace_cmd
+  failed_when: knative_namespace_cmd.rc != 0 and knative_namespace_cmd.rc != 1
+
+- name: Set istio label in knative namespace
+  shell: oc label namespace {{ knative_namespace }} istio-injection=enabled
+  register: knative_namespace_label_cmd
+  failed_when: knative_namespace_cmd.rc != 0 and knative_namespace_cmd.rc != 1

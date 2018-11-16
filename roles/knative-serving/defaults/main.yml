@@ -1,0 +1,27 @@
+---
+# defaults file for knative-serving
+knative_serving_tmp_folder: '/tmp/knative-installer/knative-serving'
+knative_serving_namespace: knative-serving
+knative_serving_service_accounts:
+  - build-controller
+  - controller
+  - autoscaler
+  - kube-state-metrics
+  - node-exporter
+  - prometheus-system
+knative_serving_admin_sas:
+  - build-controller
+  - controller
+knative_serving_deployments:
+  - name: controller
+    replicas: 0
+    ready_replicas: 0
+  - name: webhook
+    replicas: 0
+    ready_replicas: 0
+  - name: autoscaler
+    replicas: 0
+    ready_replicas: 0
+  - name: activator
+    replicas: 0
+    ready_replicas: 0

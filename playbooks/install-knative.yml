@@ -1,0 +1,10 @@
+---
+-
+  hosts: local
+  connection: local
+  gather_facts: no
+  tasks:
+    -
+      name: Knative Serving deployment
+      include_role:
+        name: knative-serving

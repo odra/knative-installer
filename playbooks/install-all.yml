@@ -1,0 +1,18 @@
+---
+-
+  hosts: local
+  connection: local
+  gather_facts: no
+  tasks:
+    -
+      name: Common/basic tasks
+      include_role:
+        name: common
+    -
+      name: Istio deployment
+      include_role:
+        name: istio
+    -
+      name: Knative Serving deployment
+      include_role:
+        name: knative-serving

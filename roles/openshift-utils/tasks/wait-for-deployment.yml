@@ -1,0 +1,9 @@
+---
+-
+  name: "Waiting for deployment {{ name }}, desired: {{ desired }} current: {{ ready }}"
+  shell: "sleep 5; oc get deployment/{{ name }} -n {{ ns }} -o jsonpath='{.status.readyReplicas}'"
+  register: result
+  retries: "{{ deployment_wait_retries }}"
+  delay: "{{ deployment_wait_delay }}"
+  changed_when: False
+  until: (result.stdout | int) == (ready | int)

@@ -1,0 +1,69 @@
+---
+-
+  name: Create knative-serving namespace
+  shell: "oc create ns {{ knative_serving_namespace }}"
+  register: knative_serving_namespace_cmd
+  failed_when: knative_serving_namespace_cmd.rc != 0 and knative_serving_namespace_cmd.rc != 1
+
+-
+  name: Ensures temporary folder exists
+  file:
+    path: "{{ knative_serving_tmp_folder }}"
+    state: directory
+
+-
+  name: Set knative-serving service account permissions
+  shell: oc adm policy add-scc-to-user anyuid -z {{ item }} -n {{ knative_serving_namespace }}
+  with_items: "{{ knative_serving_service_accounts }}"
+
+-
+  name: Set knative-serving cluster admin roles
+  shell: oc adm policy add-cluster-role-to-user cluster-admin -z {{ item }} -n {{ knative_serving_namespace }}
+  with_items: "{{ knative_serving_admin_sas }}"
+
+-
+  name: Copy deployment file to temporary folder {{ knative_serving_tmp_folder }}
+  copy:
+    src: release-lite.yaml
+    dest: "{{ knative_serving_tmp_folder }}/release-lite.yaml"
+
+-
+  name: Include knative update stuff tasks
+  include_tasks: update-deployment-data.yml
+
+-
+  name: Set knative_serving_deployed to false if no deployments are found
+  set_fact:
+    knative_serving_fully_deployed: no
+  when:
+    - "'(NotFound)' in item.stderr"
+    - knative_serving_fully_deployed is undefined
+  with_items: "{{ knative_serving_replicas_cmd.results }}"
+
+-
+  name: Check if knative-serving is fully deployed
+  set_fact:
+    knative_serving_fully_deployed: no
+  when:
+    - item.replicas != item.ready_replicas
+    - knative_serving_fully_deployed is undefined
+  with_items: "{{ knative_serving_deployments }}"
+
+-
+  name: Check knative replica status if already deployed
+  block:
+    -
+      include_role:
+        name: openshift-utils
+        tasks_from: wait-for-deployment.yml
+      vars:
+        name: "{{ item.name }}"
+        ns: "{{ knative_serving_namespace }}"
+        desired: "{{ item.replicas }}"
+        ready: "{{ item.ready_replicas }}"
+      with_items: "{{ knative_serving_deployments }}"
+  when: knative_serving_fully_deployed | default(True) == True
+
+- name: Include knative-serving deployment tasks
+  include_tasks: deploy.yml
+  when: knative_serving_fully_deployed | default(True) == False

@@ -1,0 +1,87 @@
+---
+# tasks file for istio
+-
+  name: Create istio namespace
+  shell: oc create ns {{ istio_namespace }}
+  register: istio_namespace_cmd
+  failed_when: istio_namespace_cmd.rc != 0 and istio_namespace_cmd.rc != 1
+
+-
+  name: Ensures temporary folder exists
+  file:
+    path: "{{ istio_tmp_folder }}"
+    state: directory
+
+-
+  name: Set istio servie account permissions
+  shell: oc adm policy add-scc-to-user anyuid -z {{ item }} -n {{ istio_namespace }}
+  with_items: "{{ istio_service_accounts }}"
+
+-
+  name: Set istio cluster admin role
+  shell: oc adm policy add-cluster-role-to-user cluster-admin -z {{ istio_admin_sa }} -n {{ istio_namespace }}
+
+-
+  name: Copy deployment file to temporary folder {{ istio_tmp_folder }}
+  copy:
+    src: istio.yaml
+    dest: "{{ istio_tmp_folder }}/istio.yaml"
+
+-
+  name: Fix istio template file
+  replace:
+    path: "{{ istio_tmp_folder }}/istio.yaml"
+    regexp: LoadBalancer
+    replace: NodePort
+    backup: yes
+
+-
+  name: Enable security context privileged mode
+  replace:
+    path: "{{ istio_tmp_folder }}/istio.yaml"
+    regexp: 'securityContext:\n'
+    replace: 'securityContext:\n          privileged: true\n'
+    backup: yes
+  when: istio_privileged_mode == True
+
+-
+  name: Include istio update stuff tasks
+  include_tasks: update-deployment-data.yml
+
+-
+  name: Set istio_full_deployed to false if no deployments are found
+  set_fact:
+    istio_fully_deployed: no
+  when:
+    - "'(NotFound)' in item.stderr"
+    - istio_fully_deployed is undefined
+  with_items: "{{ istio_replicas_cmd.results }}"
+
+-
+  name: Check if istio is fully deployed
+  set_fact:
+    istio_fully_deployed: no
+  when:
+    - item.replicas != item.ready_replicas
+    - istio_fully_deployed is undefined
+  with_items: "{{ istio_deployments }}"
+
+-
+  name: Check istio replica status if already deployed
+  block:
+    -
+      include_role:
+        name: openshift-utils
+        tasks_from: wait-for-deployment.yml
+      vars:
+        name: "{{ item.name }}"
+        ns: "{{ istio_namespace }}"
+        desired: "{{ item.replicas }}"
+        ready: "{{ item.ready_replicas }}"
+      with_items: "{{ istio_deployments }}"
+  when: istio_fully_deployed | default(True) == True
+
+-
+  name: Include istio deployment tasks
+  include_tasks: deploy.yml
+  when: istio_fully_deployed | default(True) == False

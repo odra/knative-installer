@@ -1,0 +1,19 @@
+---
+-
+  name: Get desired istio replicas
+  shell: oc get deployment/{{ item.name }} -n {{ istio_namespace }} -o jsonpath='{.status.replicas}'
+  register: istio_replicas_cmd
+  failed_when: no
+  with_items: "{{ istio_deployments }}"
+
+-
+  name: Get current status of istio replicas
+  shell: oc get deployment/{{ item.name }} -n {{ istio_namespace }} -o jsonpath='{.status.readyReplicas}'
+  register: istio_ready_replicas_cmd
+  failed_when: no
+  with_items: "{{ istio_deployments }}"
+-
+  name: Update istio_deployments data
+  set_fact:
+    istio_deployments: "{{ istio_deployments | update_list(index=item.0, replicas=istio_replicas_cmd.results[item.0].stdout | int, ready_replicas=istio_ready_replicas_cmd.results[item.0].stdout | int) }}"
+  with_indexed_items: "{{ istio_deployments }}"

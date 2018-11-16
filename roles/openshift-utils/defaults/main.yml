@@ -1,0 +1,4 @@
+---
+# defaults file for openshift-utils
+deployment_wait_retries: 50
+deployment_wait_delay: 10

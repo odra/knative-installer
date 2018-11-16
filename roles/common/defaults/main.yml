@@ -1,0 +1,3 @@
+---
+# defaults file for common
+knative_namespace: knative

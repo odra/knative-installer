@@ -1,0 +1,55 @@
+---
+# defaults file for istio
+istio_privileged_mode: true
+istio_tmp_folder: '/tmp/knative-installer/istio'
+istio_namespace: istio-system
+istio_service_accounts:
+  - istio-ingress-service-account
+  - default
+  - prometheus
+  - istio-egressgateway-service-account
+  - istio-citadel-service-account
+  - istio-ingressgateway-service-account
+  - istio-cleanup-old-ca-service-account
+  - istio-mixer-post-install-account
+  - istio-mixer-service-account
+  - istio-pilot-service-account
+  - istio-sidecar-injector-service-account
+istio_admin_sa: istio-galley-service-account
+istio_deployments:
+  -
+    name: istio-citadel
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-sidecar-injector
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-egressgateway
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-ingressgateway
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-pilot
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-policy
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-telemetry
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-galley
+    replicas: 0
+    ready_replicas: 0
+  -
+    name: istio-statsd-prom-bridge
+    replicas: 0
+    ready_replicas: 0

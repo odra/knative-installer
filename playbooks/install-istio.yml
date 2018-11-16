@@ -1,0 +1,10 @@
+---
+-
+  hosts: local
+  connection: local
+  gather_facts: no
+  tasks:
+    -
+      name: Istio deployment
+      include_role:
+        name: istio
